@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+constexpr uint16_t CHIP8_START_ADDRESS = 0x200;
+
 typedef struct _chip8 {
     uint8_t memory[4 * 1024];
     uint8_t V[16];

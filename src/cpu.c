@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+void chip8_next_instruction(Chip8 *cpu) {
+    cpu->pc += 2;
+}
+
 bool chip8_init(Chip8 *cpu) {
     if (cpu == nullptr) {
         return false;
@@ -134,10 +138,28 @@ Opcode decode_opcode(uint16_t raw_opcode) {
 
 void chip8_cycle(Chip8 *cpu) {
     uint16_t raw_opcode = fetch_opcode(cpu);
-    cpu->pc += 2;
+    chip8_next_instruction(cpu);
 
     Opcode opcode = decode_opcode(raw_opcode);
     switch (opcode.type) {
+        case OP_SE_3XNN:
+            if (cpu->V[opcode.x] == opcode.nn) {
+                chip8_next_instruction(cpu);
+            }
+
+            break;
+        case OP_SNE_4XNN:
+            if (cpu->V[opcode.x] != opcode.nn) {
+                chip8_next_instruction(cpu);
+            }
+
+            break;
+        case OP_SE_5XY0:
+            if (cpu->V[opcode.x] == cpu->V[opcode.y]) {
+                chip8_next_instruction(cpu);
+            }
+
+            break;
         case OP_LD_6XNN:
             cpu->V[opcode.x] = opcode.nn;
             break;
@@ -170,6 +192,12 @@ void chip8_cycle(Chip8 *cpu) {
             break;
         case OP_SHL_8XYE:
             cpu->V[opcode.x] <<= 1;
+            break;
+        case OP_SNE_9XY0:
+            if (cpu->V[opcode.x] != cpu->V[opcode.y]) {
+                chip8_next_instruction(cpu);
+            }
+
             break;
         case OP_INVALID:
             fprintf(stderr, "Invalid opcode: 0x%04X\n", raw_opcode);

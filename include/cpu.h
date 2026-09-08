@@ -85,5 +85,6 @@ typedef struct _opcode {
 bool chip8_init(Chip8 *cpu);
 bool chip8_load_rom(Chip8 *cpu, const char *filename);
 void chip8_cycle(Chip8 *cpu);
+void chip8_next_instruction(Chip8 *cpu);
 
 Opcode decode_opcode(uint16_t raw_opcode);

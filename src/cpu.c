@@ -1,6 +1,7 @@
 #include "cpu.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void chip8_next_instruction(Chip8 *cpu) {
@@ -198,6 +199,15 @@ void chip8_cycle(Chip8 *cpu) {
                 chip8_next_instruction(cpu);
             }
 
+            break;
+        case OP_LD_I_ANNN:
+            cpu->I = opcode.nnn;
+            break;
+        case OP_JP_V0_BNNN:
+            cpu->pc = opcode.nnn + cpu->V[0];
+            break;
+        case OP_RND_CXNN:
+            cpu->V[opcode.x] = (rand() % 256) & opcode.nn;
             break;
         case OP_INVALID:
             fprintf(stderr, "Invalid opcode: 0x%04X\n", raw_opcode);

@@ -12,7 +12,7 @@ typedef struct _chip8 {
     uint8_t delay_timer;
     uint8_t sound_timer;
     bool keyboard[16];
-    uint8_t diaplay[32][64];
+    bool diaplay[32][64];
     bool draw_flag;
 } Chip8;
 

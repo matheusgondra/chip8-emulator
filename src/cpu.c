@@ -144,6 +144,33 @@ void chip8_cycle(Chip8 *cpu) {
         case OP_ADD_7XNN:
             cpu->V[opcode.x] += opcode.nn;
             break;
+        case OP_LD_8XY0:
+            cpu->V[opcode.x] = cpu->V[opcode.y];
+            break;
+        case OP_OR_8XY1:
+            cpu->V[opcode.x] |= cpu->V[opcode.y];
+            break;
+        case OP_AND_8XY2:
+            cpu->V[opcode.x] &= cpu->V[opcode.y];
+            break;
+        case OP_XOR_8XY3:
+            cpu->V[opcode.x] ^= cpu->V[opcode.y];
+            break;
+        case OP_ADD_8XY4:
+            cpu->V[opcode.x] += cpu->V[opcode.y];
+            break;
+        case OP_SUB_8XY5:
+            cpu->V[opcode.x] -= cpu->V[opcode.y];
+            break;
+        case OP_SHR_8XY6:
+            cpu->V[opcode.x] >>= 1;
+            break;
+        case OP_SUBN_8XY7:
+            cpu->V[opcode.x] = cpu->V[opcode.y] - cpu->V[opcode.x];
+            break;
+        case OP_SHL_8XYE:
+            cpu->V[opcode.x] <<= 1;
+            break;
         case OP_INVALID:
             fprintf(stderr, "Invalid opcode: 0x%04X\n", raw_opcode);
             break;

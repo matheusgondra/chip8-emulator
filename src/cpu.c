@@ -138,6 +138,12 @@ void chip8_cycle(Chip8 *cpu) {
 
     Opcode opcode = decode_opcode(raw_opcode);
     switch (opcode.type) {
+        case OP_LD_6XNN:
+            cpu->V[opcode.x] = opcode.nn;
+            break;
+        case OP_ADD_7XNN:
+            cpu->V[opcode.x] += opcode.nn;
+            break;
         case OP_INVALID:
             fprintf(stderr, "Invalid opcode: 0x%04X\n", raw_opcode);
             break;

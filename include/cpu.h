@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 constexpr uint16_t CHIP8_START_ADDRESS = 0x200;
+constexpr uint16_t FONTSET_START_ADDRESS = 0x50;
 
 typedef struct _chip8 {
     uint8_t memory[4 * 1024];
@@ -86,5 +87,6 @@ bool chip8_init(Chip8 *cpu);
 bool chip8_load_rom(Chip8 *cpu, const char *filename);
 void chip8_cycle(Chip8 *cpu);
 void chip8_next_instruction(Chip8 *cpu);
+void chip8_previous_instruction(Chip8 *cpu);
 
 Opcode decode_opcode(uint16_t raw_opcode);

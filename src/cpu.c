@@ -8,6 +8,10 @@ void chip8_next_instruction(Chip8 *cpu) {
     cpu->pc += 2;
 }
 
+void chip8_previous_instruction(Chip8 *cpu) {
+    cpu->pc -= 2;
+}
+
 bool chip8_init(Chip8 *cpu) {
     if (cpu == nullptr) {
         return false;
@@ -137,6 +141,10 @@ Opcode decode_opcode(uint16_t raw_opcode) {
     };
 }
 
+static void set_colision_flag(Chip8 *cpu, bool is_collision) {
+    cpu->V[0xF] = is_collision ? 1 : 0;
+}
+
 void chip8_cycle(Chip8 *cpu) {
     uint16_t raw_opcode = fetch_opcode(cpu);
     chip8_next_instruction(cpu);
@@ -226,6 +234,102 @@ void chip8_cycle(Chip8 *cpu) {
             break;
         case OP_RND_CXNN:
             cpu->V[opcode.x] = (rand() % 256) & opcode.nn;
+            break;
+        case OP_DRW_DXYN: {
+            uint8_t start_x = cpu->V[opcode.x] % 64;
+            uint8_t start_y = cpu->V[opcode.y] % 32;
+
+            set_colision_flag(cpu, false);
+
+            for (int row = 0; row < opcode.n; row++) {
+                bool is_row_out_of_bounds = (start_y + row >= 32);
+                if (is_row_out_of_bounds) {
+                    break;
+                }
+
+                uint8_t sprite_byte = cpu->memory[cpu->I + row];
+
+                for (uint8_t col = 0; col < 8; col++) {
+                    bool is_col_out_of_bounds = (start_x + col >= 64);
+                    if (is_col_out_of_bounds) {
+                        break;
+                    }
+
+                    uint8_t sprite_pixel = sprite_byte & (0x80 >> col);
+                    if (sprite_pixel) {
+                        if (cpu->display[start_y + row][start_x + col]) {
+                            set_colision_flag(cpu, true);
+                        }
+
+                        cpu->display[start_y + row][start_x + col] ^= 1;
+                    }
+                }
+            }
+
+            cpu->draw_flag = true;
+            break;
+        }            
+        case OP_SKP_EX9E:
+            if (cpu->keyboard[cpu->V[opcode.x]]) {
+                chip8_next_instruction(cpu);
+            }
+
+            break;
+        case OP_SKNP_EXA1:
+            if (!cpu->keyboard[cpu->V[opcode.x]]) {
+                chip8_next_instruction(cpu);
+            }
+
+            break;
+        case OP_LD_VX_DT_FX07:
+            cpu->V[opcode.x] = cpu->delay_timer;
+            break;
+        case OP_WAIT_KEY_FX0A:
+            bool key_pressed = false;
+
+            for (int i = 0; i < 8; i++) {
+                if (cpu->keyboard[i]) {
+                    cpu->V[opcode.x] = i;
+                    key_pressed = true;
+                    break;
+                }
+            }
+
+            if (!key_pressed) {
+                chip8_previous_instruction(cpu);
+            }
+
+            break;
+        case OP_SET_DT_FX15:
+            cpu->delay_timer = cpu->V[opcode.x];
+            break;
+        case OP_SET_ST_FX18:
+            cpu->sound_timer = cpu->V[opcode.x];
+            break; 
+        case OP_ADD_I_FX1E:
+            cpu->I += cpu->V[opcode.x];
+            break;
+        case OP_LD_FONT_FX29:
+            cpu->I = FONTSET_START_ADDRESS + (cpu->V[opcode.x] * 5);
+            break;
+        case OP_BCD_FX33: {
+            uint8_t value = cpu->V[opcode.x];
+            
+            cpu->memory[cpu->I] = value / 100;
+            cpu->memory[cpu->I + 1] = (value / 10) % 10;
+            cpu->memory[cpu->I + 2] = value % 10;
+            
+            break;
+        }
+        case OP_DUMP_REGS_FX55: 
+            for (int i = 0; i <= opcode.x; i++) {
+                cpu->memory[cpu->I + i] = cpu->V[i];
+            }
+            break;
+        case OP_LOAD_REGS_FX65:
+            for (int i = 0; i <= opcode.x; i++) {
+                cpu->V[i] = cpu->memory[cpu->I + i];
+            }
             break;
         case OP_INVALID:
             fprintf(stderr, "Invalid opcode: 0x%04X\n", raw_opcode);

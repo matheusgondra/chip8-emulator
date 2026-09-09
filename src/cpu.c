@@ -22,6 +22,10 @@ bool chip8_init(Chip8 *cpu) {
     cpu->pc = CHIP8_START_ADDRESS;
     cpu->draw_flag = true;
 
+    for (size_t i = 0; i < sizeof(FONTSET); i++) {
+        cpu->memory[FONTSET_START_ADDRESS + i] = FONTSET[i];
+    }
+
     return true;
 }
 
@@ -205,21 +209,36 @@ void chip8_cycle(Chip8 *cpu) {
         case OP_XOR_8XY3:
             cpu->V[opcode.x] ^= cpu->V[opcode.y];
             break;
-        case OP_ADD_8XY4:
-            cpu->V[opcode.x] += cpu->V[opcode.y];
+        case OP_ADD_8XY4:{
+            uint16_t sum = cpu->V[opcode.x] + cpu->V[opcode.y];
+            cpu->V[0xF] = (sum > 255) ? 1 : 0;
+            cpu->V[opcode.x] = sum & 0xFF;
             break;
-        case OP_SUB_8XY5:
+        }
+        case OP_SUB_8XY5: {
+            uint8_t flag = (cpu->V[opcode.x] >= cpu->V[opcode.y]) ? 1 : 0;
             cpu->V[opcode.x] -= cpu->V[opcode.y];
+            cpu->V[0xF] = flag;
             break;
-        case OP_SHR_8XY6:
+        }
+        case OP_SHR_8XY6: {
+            uint8_t flag = cpu->V[opcode.x] & 0x1;
             cpu->V[opcode.x] >>= 1;
+            cpu->V[0xF] = flag;
             break;
-        case OP_SUBN_8XY7:
+        }
+        case OP_SUBN_8XY7: {
+            uint8_t flag = (cpu->V[opcode.y] >= cpu->V[opcode.x]) ? 1 : 0;
             cpu->V[opcode.x] = cpu->V[opcode.y] - cpu->V[opcode.x];
+            cpu->V[0xF] = flag;
             break;
-        case OP_SHL_8XYE:
+        }
+        case OP_SHL_8XYE: {
+            uint8_t flag = (cpu->V[opcode.x] & 0x80) >> 7;
             cpu->V[opcode.x] <<= 1;
+            cpu->V[0xF] = flag;
             break;
+        }
         case OP_SNE_9XY0:
             if (cpu->V[opcode.x] != cpu->V[opcode.y]) {
                 chip8_next_instruction(cpu);
@@ -287,7 +306,7 @@ void chip8_cycle(Chip8 *cpu) {
         case OP_WAIT_KEY_FX0A:
             bool key_pressed = false;
 
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 16; i++) {
                 if (cpu->keyboard[i]) {
                     cpu->V[opcode.x] = i;
                     key_pressed = true;

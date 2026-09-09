@@ -143,6 +143,24 @@ void chip8_cycle(Chip8 *cpu) {
 
     Opcode opcode = decode_opcode(raw_opcode);
     switch (opcode.type) {
+        case OP_SYS_0NNN:
+            break;
+        case OP_CLS_00E0:
+            memset(cpu->display, 0, sizeof(cpu->display));
+            cpu->draw_flag = true;
+            break;
+        case OP_RET_00EE:
+            cpu->sp--;
+            cpu->pc = cpu->stack[cpu->sp];
+            break;
+        case OP_JP_1NNN:
+            cpu->pc = opcode.nnn;
+            break;
+        case OP_CALL_2NNN:
+            cpu->stack[cpu->sp] = cpu->pc;
+            cpu->sp++;
+            cpu->pc = opcode.nnn;
+            break;
         case OP_SE_3XNN:
             if (cpu->V[opcode.x] == opcode.nn) {
                 chip8_next_instruction(cpu);
